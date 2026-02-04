@@ -56,8 +56,8 @@ func (p *PostgresPool) Create(conn *pgx.Conn, task todo.Task) (todo.Task, error)
 
 func (p *PostgresPool) GetAll(conn *pgx.Conn) ([]todo.Task, error) {
 	sqlQuery := `
-	SELECT id, title, description, completed, created_at
-	FROM tasks;
+	SELECT id, title, description, completed, created_at FROM tasks
+	ORDER BY id DESC;
 	`
 
 	rows, err := conn.Query(p.ctx, sqlQuery)
