@@ -10,40 +10,75 @@ import (
 // todo:
 /*
 1. Implement pgxpool.Pool
-2. Write ID to Task
-3. Return ID in Create
-4. Make a struct for postgres
 */
 
-func CreateConnection(ctx context.Context) (*pgx.Conn, error) {
-	return pgx.Connect(ctx, "postgres://postgres:password@localhost:5432/go-todo")
+type PostgresPool struct {
+	ctx context.Context
 }
 
-func CreateTable(ctx context.Context, conn *pgx.Conn) error {
-	sqlQuery := `
-	CREATE TABLE IF NOT EXISTS tasks (
-		id SERIAL PRIMARY KEY,
-		title VARCHAR(50) NOT NULL,
-		description VARCHAR(200) NOT NULL,
-		completed BOOLEAN NOT NULL,
-		created_at TIMESTAMP NOT NULL,
-
-		UNIQUE(title)
-	);
-	`
-
-	_, err := conn.Exec(ctx, sqlQuery)
-
-	return err
+func NewPostgresPool(ctx context.Context) *PostgresPool {
+	return &PostgresPool{
+		ctx: ctx,
+	}
 }
 
-func Create(ctx context.Context, conn *pgx.Conn, task todo.Task) error {
+func (p *PostgresPool) CreateConnection() (*pgx.Conn, error) {
+	return pgx.Connect(p.ctx, "postgres://postgres:password@localhost:5432/go-todo")
+}
+
+func (p *PostgresPool) Create(conn *pgx.Conn, task todo.Task) (todo.Task, error) {
 	sqlQuery := `
 	INSERT INTO tasks (title, description, completed, created_at)
-	VALUES($1, $2, $3, $4);
+	VALUES($1, $2, $3, $4)
+	RETURNING id, title, descripiton, completed, created_at;
 	`
 
-	_, err := conn.Exec(ctx, sqlQuery, task.Title, task.Descripton, task.Completed, task.CreatedAt)
+	var dbTask todo.Task
+	if err := conn.QueryRow(
+		p.ctx,
+		sqlQuery,
+		task.Title,
+		task.Descripton,
+		task.Completed,
+		task.CreatedAt,
+	).Scan(
+		&dbTask.ID,
+		&dbTask.Title,
+		&dbTask.Descripton,
+		&dbTask.Completed,
+		&dbTask.CreatedAt,
+	); err != nil {
+		return todo.Task{}, err
+	}
 
-	return err
+	return dbTask, nil
+}
+
+func (p *PostgresPool) GetAll(conn *pgx.Conn) ([]todo.Task, error) {
+	sqlQuery := `
+	SELECT id, title, description, completed, created_at
+	FROM tasks;
+	`
+
+	rows, err := conn.Query(p.ctx, sqlQuery)
+	if err != nil {
+		return nil, err
+	}
+	// defer (when implement pool)
+
+	var tasks []todo.Task
+	for rows.Next() {
+		var task todo.Task
+		if err = rows.Scan(&task.ID, &task.Title, &task.Descripton, &task.Completed, &task.CreatedAt); err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, task)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }

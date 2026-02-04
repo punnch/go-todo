@@ -9,5 +9,6 @@ import (
 // contract to service
 
 type TodoRepository interface {
-	Create(ctx context.Context, conn *pgx.Conn, task Task) error
+	Create(ctx context.Context, conn *pgx.Conn, task Task) (Task, error)
+	GetAll(ctx context.Context, conn *pgx.Conn) ([]Task, error)
 }
