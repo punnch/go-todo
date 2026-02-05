@@ -97,10 +97,12 @@ func (p *PostgresRepo) Get(ctx context.Context, id int) (todo.Task, error) {
 func (p *PostgresRepo) Delete(ctx context.Context, id int) error {
 	sql := `
 	DELETE FROM tasks
-	WHERE id=$1;
+	WHERE id=$1
+	RETURNING id;
 	`
 
-	_, err := p.pool.Exec(ctx, sql, id)
+	var checkId int
+	err := p.pool.QueryRow(ctx, sql, id).Scan(&checkId)
 
 	return err
 }
@@ -110,7 +112,7 @@ func (p *PostgresRepo) Complete(ctx context.Context, id int) (todo.Task, error) 
 	UPDATE tasks
 	SET completed=TRUE
 	WHERE id=$1
-	RETURNING id, title, descripiton, completed, created_at;
+	RETURNING id, title, description, completed, created_at;
 	`
 
 	var dbTask todo.Task
