@@ -3,40 +3,31 @@ package db
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/punnch/go-todo/internal/todo"
 )
 
-// todo:
-/*
-1. Implement pgxpool.Pool
-*/
-
-type PostgresPool struct {
-	ctx context.Context
+type PostgresRepo struct {
+	pool *pgxpool.Pool
 }
 
-func NewPostgresPool(ctx context.Context) *PostgresPool {
-	return &PostgresPool{
-		ctx: ctx,
+func NewPostgresRepo(pool *pgxpool.Pool) *PostgresRepo {
+	return &PostgresRepo{
+		pool: pool,
 	}
 }
 
-func (p *PostgresPool) CreateConnection() (*pgx.Conn, error) {
-	return pgx.Connect(p.ctx, "postgres://postgres:password@localhost:5432/go-todo")
-}
-
-func (p *PostgresPool) Create(conn *pgx.Conn, task todo.Task) (todo.Task, error) {
-	sqlQuery := `
+func (p *PostgresRepo) Create(ctx context.Context, task todo.Task) (todo.Task, error) {
+	sql := `
 	INSERT INTO tasks (title, description, completed, created_at)
 	VALUES($1, $2, $3, $4)
 	RETURNING id, title, descripiton, completed, created_at;
 	`
 
 	var dbTask todo.Task
-	if err := conn.QueryRow(
-		p.ctx,
-		sqlQuery,
+	if err := p.pool.QueryRow(
+		ctx,
+		sql,
 		task.Title,
 		task.Descripton,
 		task.Completed,
@@ -54,17 +45,17 @@ func (p *PostgresPool) Create(conn *pgx.Conn, task todo.Task) (todo.Task, error)
 	return dbTask, nil
 }
 
-func (p *PostgresPool) GetAll(conn *pgx.Conn) ([]todo.Task, error) {
-	sqlQuery := `
+func (p *PostgresRepo) GetAll(ctx context.Context) ([]todo.Task, error) {
+	sql := `
 	SELECT id, title, description, completed, created_at FROM tasks
 	ORDER BY id DESC;
 	`
 
-	rows, err := conn.Query(p.ctx, sqlQuery)
+	rows, err := p.pool.Query(ctx, sql)
 	if err != nil {
 		return nil, err
 	}
-	// defer (when implement pool)
+	defer rows.Close()
 
 	var tasks []todo.Task
 	for rows.Next() {
@@ -81,4 +72,37 @@ func (p *PostgresPool) GetAll(conn *pgx.Conn) ([]todo.Task, error) {
 	}
 
 	return tasks, nil
+}
+
+func (p *PostgresRepo) Delete(ctx context.Context, id int) error {
+	sql := `
+	DELETE FROM tasks
+	WHERE id=$1;
+	`
+
+	_, err := p.pool.Exec(ctx, sql, id)
+
+	return err
+}
+
+func (p *PostgresRepo) Complete(ctx context.Context, id int) (todo.Task, error) {
+	sql := `
+	UPDATE tasks
+	SET completed=TRUE
+	WHERE id=$1
+	RETURNING id, title, descripiton, completed, created_at;
+	`
+
+	var dbTask todo.Task
+	if err := p.pool.QueryRow(ctx, sql, id).Scan(
+		&dbTask.ID,
+		&dbTask.Title,
+		&dbTask.Descripton,
+		&dbTask.Completed,
+		&dbTask.CreatedAt,
+	); err != nil {
+		return todo.Task{}, err
+	}
+
+	return dbTask, nil
 }
