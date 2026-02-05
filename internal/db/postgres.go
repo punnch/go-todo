@@ -74,6 +74,26 @@ func (p *PostgresRepo) GetAll(ctx context.Context) ([]todo.Task, error) {
 	return tasks, nil
 }
 
+func (p *PostgresRepo) Get(ctx context.Context, id int) (todo.Task, error) {
+	sql := `
+	SElECT id, title, description, completed, created_at FROM TASKS
+	WHERE id=$1;
+	`
+
+	var dbTask todo.Task
+	if err := p.pool.QueryRow(ctx, sql, id).Scan(
+		&dbTask.ID,
+		&dbTask.Title,
+		&dbTask.Descripton,
+		&dbTask.Completed,
+		&dbTask.CreatedAt,
+	); err != nil {
+		return todo.Task{}, err
+	}
+
+	return dbTask, nil
+}
+
 func (p *PostgresRepo) Delete(ctx context.Context, id int) error {
 	sql := `
 	DELETE FROM tasks
