@@ -6,7 +6,6 @@ import (
 )
 
 // contract to service
-
 type TodoRepository interface {
 	Create(ctx context.Context, task Task) (Task, error)
 	GetAll(ctx context.Context) ([]Task, error)
