@@ -14,8 +14,14 @@ type TodoService struct {
 	repo TodoRepository
 }
 
-func (s *TodoService) CreateTask(ctx context.Context, title, desciption string) (Task, error) {
-	task := NewTask(title, desciption)
+func NewTodoService(repo TodoRepository) *TodoService {
+	return &TodoService{
+		repo: repo,
+	}
+}
+
+func (s *TodoService) CreateTask(ctx context.Context, title, description string) (Task, error) {
+	task := NewTask(title, description)
 
 	dbTask, err := s.repo.Create(ctx, task)
 	if err != nil {
