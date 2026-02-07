@@ -72,7 +72,18 @@ fail:
 - response body: error + time
 */
 func (h *Handler) GetAllTasks(w http.ResponseWriter, r *http.Request) {
+	tasks, err := h.service.GetAllTasks(r.Context())
+	if err != nil {
+		dto.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
 
+	w.WriteHeader(http.StatusOK)
+	b := dto.ToJSON(tasks)
+	if _, err := w.Write(b); err != nil {
+		fmt.Println("failed to write response body:", err)
+		return
+	}
 }
 
 /*
