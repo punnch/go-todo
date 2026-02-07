@@ -21,7 +21,7 @@ func (p *PostgresRepo) Create(ctx context.Context, task todo.Task) (todo.Task, e
 	sql := `
 	INSERT INTO tasks (title, description, completed, created_at)
 	VALUES($1, $2, $3, $4)
-	RETURNING id, title, descripiton, completed, created_at;
+	RETURNING id, title, description, completed, created_at;
 	`
 
 	var dbTask todo.Task
