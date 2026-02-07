@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/punnch/go-todo/internal/api/handlers"
 	"github.com/punnch/go-todo/internal/db"
 	"github.com/punnch/go-todo/internal/todo"
 )
@@ -31,11 +31,8 @@ func main() {
 
 	repo := db.NewPostgresRepo(pool)
 	service := todo.NewTodoService(repo)
+	handler := handlers.NewHandler(service)
+	router := handlers.NewRouter(handler)
 
-	tasks, err := service.CompleteTask(ctx, 1)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(tasks)
+	handlers.StartServer(router)
 }

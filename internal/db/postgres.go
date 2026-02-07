@@ -19,8 +19,8 @@ func NewPostgresRepo(pool *pgxpool.Pool) *PostgresRepo {
 
 func (p *PostgresRepo) Create(ctx context.Context, task todo.Task) (todo.Task, error) {
 	sql := `
-	INSERT INTO tasks (title, description, completed, created_at)
-	VALUES($1, $2, $3, $4)
+	INSERT INTO tasks (title, description)
+	VALUES($1, $2)
 	RETURNING id, title, description, completed, created_at;
 	`
 
@@ -30,8 +30,6 @@ func (p *PostgresRepo) Create(ctx context.Context, task todo.Task) (todo.Task, e
 		sql,
 		task.Title,
 		task.Descripton,
-		task.Completed,
-		task.CreatedAt,
 	).Scan(
 		&dbTask.ID,
 		&dbTask.Title,
