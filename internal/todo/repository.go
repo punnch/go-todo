@@ -14,7 +14,4 @@ type TodoRepository interface {
 	Complete(ctx context.Context, id int) (Task, error)
 }
 
-var (
-	ErrNotFound     error = errors.New("task not found")
-	ErrInvalidTitle error = errors.New("invalid task title")
-)
+var ErrNotFound error = errors.New("task not found")

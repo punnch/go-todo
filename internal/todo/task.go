@@ -4,12 +4,6 @@ import (
 	"time"
 )
 
-// todo:
-/*
-1. Realize why do I need a TaskUseCase
-*/
-
-// Entity
 type Task struct {
 	ID         int
 	Title      string
@@ -25,12 +19,4 @@ func NewTask(title string, description string) Task {
 		Completed:  false,
 		CreatedAt:  time.Now(),
 	}
-}
-
-func (t *Task) Complete() {
-	t.Completed = true
-}
-
-type TaskUseCase interface {
-	Complete()
 }
