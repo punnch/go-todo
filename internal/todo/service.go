@@ -7,9 +7,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// Usecase
-// business logic
-
 type TodoService struct {
 	repo TodoRepository
 }
@@ -25,9 +22,6 @@ func (s *TodoService) CreateTask(ctx context.Context, title, description string)
 
 	dbTask, err := s.repo.Create(ctx, task)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return Task{}, ErrNotFound
-		}
 		return Task{}, err
 	}
 
