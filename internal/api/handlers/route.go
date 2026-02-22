@@ -26,12 +26,11 @@ func StartServer(r *Router) error {
 	router.HandleFunc("/tasks/{id}", r.handlers.DeleteTask).Methods("DELETE")
 	router.HandleFunc("/tasks/{id}", r.handlers.CompleteTask).Methods("PATCH")
 
-	if err := http.ListenAndServe(":8080", router); err != nil {
-		if errors.Is(err, http.ErrServerClosed) {
-			return nil
-		}
+	err := http.ListenAndServe(":8080", router)
+
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
+	} else {
 		return err
 	}
-
-	return nil
 }
