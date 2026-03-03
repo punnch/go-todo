@@ -2,11 +2,17 @@ include .env
 export
 
 # docker
+deploy:
+	docker compose up -d
+
 deploy-app:
 	docker compose up -d application
 
 deploy-postgres:
 	docker compose up -d postgres
+
+deploy-migrate:
+	docker compose upd -d migrate
 
 # migrate
 migrate-up:
