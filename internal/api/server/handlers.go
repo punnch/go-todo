@@ -74,7 +74,34 @@ fail:
 - response body: error + time
 */
 func (h *Handler) GetAllTasks(w http.ResponseWriter, r *http.Request) {
-	tasks, err := h.service.GetAllTasks(r.Context())
+	q := r.URL.Query()
+
+	idStr := q.Get("id")
+	completedStr := q.Get("completed")
+
+	var id *int
+	if idStr != "" {
+		idInt, err := strconv.Atoi(idStr)
+		if err != nil {
+			dto.ErrorJSON(w, err, http.StatusBadRequest)
+			return
+		}
+
+		id = &idInt
+	}
+
+	var completed *bool 
+	if completedStr != "" {
+		completedBool, err := strconv.ParseBool(completedStr)
+		if err != nil {
+			dto.ErrorJSON(w, err, http.StatusBadRequest)
+			return
+		}
+
+		completed = &completedBool
+	}
+
+	tasks, err := h.service.GetAllTasks(r.Context(), id, completed)
 	if err != nil {
 		dto.ErrorJSON(w, err, http.StatusBadRequest)
 		return

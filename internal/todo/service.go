@@ -28,8 +28,8 @@ func (s *TodoService) CreateTask(ctx context.Context, title, description string)
 	return dbTask, nil
 }
 
-func (s *TodoService) GetAllTasks(ctx context.Context) ([]Task, error) {
-	tasks, err := s.repo.GetAll(ctx)
+func (s *TodoService) GetAllTasks(ctx context.Context, id *int, completed *bool) ([]Task, error) {
+	tasks, err := s.repo.GetAll(ctx, id, completed)
 	if err != nil {
 		return nil, err
 	}

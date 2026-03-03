@@ -43,13 +43,16 @@ func (p *PostgresRepo) Create(ctx context.Context, task todo.Task) (todo.Task, e
 	return dbTask, nil
 }
 
-func (p *PostgresRepo) GetAll(ctx context.Context) ([]todo.Task, error) {
+func (p *PostgresRepo) GetAll(ctx context.Context, id *int, completed *bool) ([]todo.Task, error) {
 	sql := `
-	SELECT id, title, description, completed, created_at FROM tasks
+	SELECT id, title, description, completed, created_at 
+	FROM tasks
+	WHERE ($1::int IS NULL OR id=$1) 
+	  AND ($2::boolean IS NULL OR complted=$2)
 	ORDER BY id DESC;
 	`
 
-	rows, err := p.pool.Query(ctx, sql)
+	rows, err := p.pool.Query(ctx, sql, id, completed)
 	if err != nil {
 		return nil, err
 	}

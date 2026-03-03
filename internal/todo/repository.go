@@ -8,7 +8,7 @@ import (
 // contract to service
 type TodoRepository interface {
 	Create(ctx context.Context, task Task) (Task, error)
-	GetAll(ctx context.Context) ([]Task, error)
+	GetAll(ctx context.Context, id *int, completed *bool) ([]Task, error)
 	Get(ctx context.Context, id int) (Task, error)
 	Delete(ctx context.Context, id int) error
 	Complete(ctx context.Context, id int) (Task, error)
