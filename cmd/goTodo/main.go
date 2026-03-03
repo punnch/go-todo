@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/punnch/go-todo/internal/api/handlers"
+	"github.com/punnch/go-todo/internal/api/server"
 	"github.com/punnch/go-todo/internal/db"
 	"github.com/punnch/go-todo/internal/todo"
 )
@@ -20,10 +20,10 @@ func main() {
 
 	repo := db.NewPostgresRepo(pool)
 	service := todo.NewTodoService(repo)
-	handler := handlers.NewHandler(service)
-	router := handlers.NewRouter(handler)
+	handler := server.NewHandler(service)
+	router := server.NewRouter(handler)
 
-	if err := handlers.StartServer(router); err != nil {
+	if err := server.StartServer(router); err != nil {
 		panic(err)
 	}
 }

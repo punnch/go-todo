@@ -10,10 +10,10 @@ deploy-postgres:
 
 # migrate
 migrate-up:
-	migrate -path migrations -database ${DB_URL} up
+	migrate -path migrations -database ${MIGRATE_DB_URL} up
 
 migrate-down:
-	migrate -path migrations -database ${DB_URL} down
+	migrate -path migrations -database ${MIGRATE_DB_URL} down
 
 # other
 service-run:

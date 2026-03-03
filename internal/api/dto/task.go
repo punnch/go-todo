@@ -5,6 +5,10 @@ import (
 	"errors"
 )
 
+type CompleteTaskDTO struct {
+	completed bool
+}
+
 type Task struct {
 	Title       string
 	Description string
