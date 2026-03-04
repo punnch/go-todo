@@ -5,6 +5,9 @@ export
 deploy:
 	docker compose up -d
 
+undeploy:
+	docker compose down
+
 deploy-app:
 	docker compose up -d application
 
