@@ -17,6 +17,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer pool.Close()
 
 	repo := db.NewPostgresRepo(pool)
 	service := todo.NewTodoService(repo)
