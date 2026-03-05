@@ -15,15 +15,11 @@ deploy-postgres:
 	docker compose up -d postgres
 
 deploy-migrate:
-	docker compose upd -d migrate
+	docker compose up -d migrate
 
 # migrate
 migrate-up:
-	migrate -path migrations -database ${MIGRATE_DB_URL} up
+	migrate -path migrations -database ${LOCAL_DB_URL} up
 
 migrate-down:
-	migrate -path migrations -database ${MIGRATE_DB_URL} down
-
-# other
-service-run:
-	go run cmd/goTodo/main.go
+	migrate -path migrations -database ${LOCAL_DB_URL} down
