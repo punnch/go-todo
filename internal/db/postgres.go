@@ -29,11 +29,11 @@ func (p *PostgresRepo) Create(ctx context.Context, task todo.Task) (todo.Task, e
 		ctx,
 		sql,
 		task.Title,
-		task.Descripton,
+		task.Description,
 	).Scan(
 		&dbTask.ID,
 		&dbTask.Title,
-		&dbTask.Descripton,
+		&dbTask.Description,
 		&dbTask.Completed,
 		&dbTask.CreatedAt,
 	); err != nil {
@@ -48,7 +48,7 @@ func (p *PostgresRepo) GetAll(ctx context.Context, id *int, completed *bool) ([]
 	SELECT id, title, description, completed, created_at 
 	FROM tasks
 	WHERE ($1::int IS NULL OR id=$1) 
-	  AND ($2::boolean IS NULL OR complted=$2)
+	  AND ($2::boolean IS NULL OR completed=$2)
 	ORDER BY id DESC;
 	`
 
@@ -61,7 +61,13 @@ func (p *PostgresRepo) GetAll(ctx context.Context, id *int, completed *bool) ([]
 	var tasks []todo.Task
 	for rows.Next() {
 		var task todo.Task
-		if err = rows.Scan(&task.ID, &task.Title, &task.Descripton, &task.Completed, &task.CreatedAt); err != nil {
+		if err = rows.Scan(
+			&task.ID,
+			&task.Title,
+			&task.Description,
+			&task.Completed,
+			&task.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 
@@ -85,7 +91,7 @@ func (p *PostgresRepo) Get(ctx context.Context, id int) (todo.Task, error) {
 	if err := p.pool.QueryRow(ctx, sql, id).Scan(
 		&dbTask.ID,
 		&dbTask.Title,
-		&dbTask.Descripton,
+		&dbTask.Description,
 		&dbTask.Completed,
 		&dbTask.CreatedAt,
 	); err != nil {
@@ -120,7 +126,7 @@ func (p *PostgresRepo) Complete(ctx context.Context, id int) (todo.Task, error) 
 	if err := p.pool.QueryRow(ctx, sql, id).Scan(
 		&dbTask.ID,
 		&dbTask.Title,
-		&dbTask.Descripton,
+		&dbTask.Description,
 		&dbTask.Completed,
 		&dbTask.CreatedAt,
 	); err != nil {
