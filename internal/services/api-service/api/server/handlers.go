@@ -7,17 +7,18 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/punnch/go-todo/internal/api/dto"
-	"github.com/punnch/go-todo/internal/todo"
+	"github.com/punnch/go-todo/internal/core/apperrors"
+	"github.com/punnch/go-todo/internal/services/api-service/api/dto"
+	"github.com/punnch/go-todo/internal/services/api-service/client"
 )
 
 type Handler struct {
-	service *todo.TodoService
+	todoClient *client.TodoClient
 }
 
-func NewHandler(todoService *todo.TodoService) *Handler {
+func NewHandler(todoClient *client.TodoClient) *Handler {
 	return &Handler{
-		service: todoService,
+		todoClient: todoClient,
 	}
 }
 
@@ -46,9 +47,9 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := h.service.CreateTask(r.Context(), taskDTO.Title, taskDTO.Description)
+	task, err := h.todoClient.CreateTask(r.Context(), taskDTO.Title, taskDTO.Description)
 	if err != nil {
-		dto.ErrorCompareJSON(w, err, todo.ErrNotFound, http.StatusNotFound)
+		dto.ErrorCompareJSON(w, err, apperrors.ErrNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -61,9 +62,9 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-path: /tasks
+path: /tasks?id={id}&completed={completed}
 method: GET
-info: json
+info: query params
 
 succeed:
 - status: 200 OK
@@ -90,7 +91,7 @@ func (h *Handler) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 		id = &idInt
 	}
 
-	var completed *bool 
+	var completed *bool
 	if completedStr != "" {
 		completedBool, err := strconv.ParseBool(completedStr)
 		if err != nil {
@@ -101,7 +102,7 @@ func (h *Handler) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 		completed = &completedBool
 	}
 
-	tasks, err := h.service.GetAllTasks(r.Context(), id, completed)
+	tasks, err := h.todoClient.GetAllTasks(r.Context(), id, completed)
 	if err != nil {
 		dto.ErrorJSON(w, err, http.StatusBadRequest)
 		return
@@ -138,9 +139,9 @@ func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := h.service.GetTask(r.Context(), id)
+	task, err := h.todoClient.GetTask(r.Context(), id)
 	if err != nil {
-		dto.ErrorCompareJSON(w, err, todo.ErrNotFound, http.StatusNotFound)
+		dto.ErrorCompareJSON(w, err, apperrors.ErrNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -175,8 +176,8 @@ func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.DeleteTask(r.Context(), id); err != nil {
-		dto.ErrorCompareJSON(w, err, todo.ErrNotFound, http.StatusNotFound)
+	if err := h.todoClient.DeleteTask(r.Context(), id); err != nil {
+		dto.ErrorCompareJSON(w, err, apperrors.ErrNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -186,7 +187,7 @@ func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 /*
 path: /tasks/{id}
 method: PATCH
-info: path + json
+info: path
 
 succeed:
 - status: 200 OK
@@ -211,9 +212,9 @@ func (h *Handler) CompleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := h.service.CompleteTask(r.Context(), id)
+	task, err := h.todoClient.CompleteTask(r.Context(), id, completeTaskDTO.Completed)
 	if err != nil {
-		dto.ErrorCompareJSON(w, err, todo.ErrNotFound, http.StatusNotFound)
+		dto.ErrorCompareJSON(w, err, apperrors.ErrNotFound, http.StatusNotFound)
 		return
 	}
 

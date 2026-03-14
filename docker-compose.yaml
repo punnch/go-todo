@@ -1,11 +1,28 @@
 services:
-  application:
-    build: .
-    container_name: go-todo
+  api-service:
+    build:
+      context: .
+      dockerfile: cmd/api-service/Dockerfile
+    container_name: api-service
+    depends_on:
+      - db-service
+    environment:
+      DB_SERVICE_URL: ${DB_SERVICE_URL}
+    ports:
+      - 8080:8080
+
+  db-service:
+    build:
+      context: .
+      dockerfile: cmd/db-service/Dockerfile
+    container_name: db-service
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       DB_URL: ${DB_URL}
     ports:
-      - 8080:8080
+      - 8010:8010
 
   postgres:
     image: postgres:18-bookworm
@@ -27,8 +44,7 @@ services:
     image: migrate/migrate
     container_name: migrate
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     volumes:
-      - ./migrations:/app/migrations
-    command: -path /app/migrations -database ${DB_URL} up
+      - ./internal/services/db-service/migrations:/migrations
+    command: -path /migrations -database ${DB_URL} up

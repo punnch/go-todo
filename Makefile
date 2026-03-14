@@ -8,18 +8,15 @@ deploy:
 undeploy:
 	docker compose down
 
-deploy-app:
-	docker compose up -d application
-
-deploy-postgres:
-	docker compose up -d postgres
-
-deploy-migrate:
-	docker compose up -d migrate
-
 # migrate
 migrate-up:
-	migrate -path migrations -database ${LOCAL_DB_URL} up
+	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} up
 
 migrate-down:
-	migrate -path migrations -database ${LOCAL_DB_URL} down
+	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} down
+
+migrate-up-step:
+	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} up ${step}
+
+migrate-down-step:
+	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} down ${step}

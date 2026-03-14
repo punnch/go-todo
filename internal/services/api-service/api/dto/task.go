@@ -6,12 +6,12 @@ import (
 )
 
 type CompleteTaskDTO struct {
-	completed bool
+	Completed bool `json:"completed"`
 }
 
 type Task struct {
-	Title       string
-	Description string
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
 
 func (t Task) ValidateToCreate() error {

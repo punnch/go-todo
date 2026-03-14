@@ -1,10 +1,10 @@
-package db
+package postgres
 
 import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/punnch/go-todo/internal/todo"
+	"github.com/punnch/go-todo/internal/core/domains/todo"
 )
 
 type PostgresRepo struct {
@@ -15,6 +15,11 @@ func NewPostgresRepo(pool *pgxpool.Pool) *PostgresRepo {
 	return &PostgresRepo{
 		pool: pool,
 	}
+}
+
+// Create pool to work without concurrency problems
+func NewPostrgresPool(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
+	return pgxpool.New(ctx, dsn)
 }
 
 func (p *PostgresRepo) Create(ctx context.Context, task todo.Task) (todo.Task, error) {
@@ -83,7 +88,7 @@ func (p *PostgresRepo) GetAll(ctx context.Context, id *int, completed *bool) ([]
 
 func (p *PostgresRepo) Get(ctx context.Context, id int) (todo.Task, error) {
 	sql := `
-	SElECT id, title, description, completed, created_at FROM TASKS
+	SELECT id, title, description, completed, created_at FROM TASKS
 	WHERE id=$1;
 	`
 
@@ -114,16 +119,16 @@ func (p *PostgresRepo) Delete(ctx context.Context, id int) error {
 	return err
 }
 
-func (p *PostgresRepo) Complete(ctx context.Context, id int) (todo.Task, error) {
+func (p *PostgresRepo) Complete(ctx context.Context, id int, completed bool) (todo.Task, error) {
 	sql := `
 	UPDATE tasks
-	SET completed=TRUE
-	WHERE id=$1
+	SET completed=$1
+	WHERE id=$2
 	RETURNING id, title, description, completed, created_at;
 	`
 
 	var dbTask todo.Task
-	if err := p.pool.QueryRow(ctx, sql, id).Scan(
+	if err := p.pool.QueryRow(ctx, sql, completed, id).Scan(
 		&dbTask.ID,
 		&dbTask.Title,
 		&dbTask.Description,

@@ -5,11 +5,11 @@ import (
 )
 
 type Task struct {
-	ID          int
-	Title       string
-	Description string
-	Completed   bool
-	CreatedAt   time.Time
+	ID          int       `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Completed   bool      `json:"completed"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func NewTask(title string, description string) Task {
