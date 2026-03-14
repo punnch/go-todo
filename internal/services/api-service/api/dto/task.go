@@ -6,7 +6,7 @@ import (
 )
 
 type CompleteTaskDTO struct {
-	Completed bool `json:"completed"`
+	Completed *bool `json:"completed"`
 }
 
 type Task struct {

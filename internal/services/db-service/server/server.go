@@ -136,7 +136,7 @@ func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) completeTask(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Completed bool `json:"completed"`
+		Completed *bool `json:"completed"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

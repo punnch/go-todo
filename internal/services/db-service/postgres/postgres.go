@@ -119,7 +119,11 @@ func (p *PostgresRepo) Delete(ctx context.Context, id int) error {
 	return err
 }
 
-func (p *PostgresRepo) Complete(ctx context.Context, id int, completed bool) (todo.Task, error) {
+func (p *PostgresRepo) Complete(ctx context.Context, id int, completed *bool) (todo.Task, error) {
+	if completed == nil {
+		return p.Get(ctx, id)
+	}
+
 	sql := `
 	UPDATE tasks
 	SET completed=$1

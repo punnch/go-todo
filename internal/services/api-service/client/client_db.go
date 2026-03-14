@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/punnch/go-todo/internal/core/domains/todo"
@@ -68,12 +69,18 @@ func (c *TodoClient) CreateTask(ctx context.Context, title, description string) 
 func (c *TodoClient) GetAllTasks(ctx context.Context, id *int, completed *bool) ([]todo.Task, error) {
 	url := c.baseURL + "/tasks"
 
+	var params []string
+
 	if id != nil {
-		url += fmt.Sprintf("?id=%d", id)
+		params = append(params, fmt.Sprintf("id=%d", *id))
 	}
 
 	if completed != nil {
-		url += fmt.Sprintf("?completed=%v", completed)
+		params = append(params, fmt.Sprintf("completed=%v", *completed))
+	}
+
+	if len(params) > 0 {
+		url += "?" + strings.Join(params, "&")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -143,11 +150,18 @@ func (c *TodoClient) DeleteTask(ctx context.Context, id int) error {
 	return nil
 }
 
-func (c *TodoClient) CompleteTask(ctx context.Context, id int, completed bool) (todo.Task, error) {
+func (c *TodoClient) CompleteTask(ctx context.Context, id int, completed *bool) (todo.Task, error) {
 	url := c.baseURL + fmt.Sprintf("/tasks/%d", id)
 
+	payload := map[string]*bool{"Completed": completed}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return todo.Task{}, err
+	}
+
 	// Create HTTP request
-	req, err := http.NewRequestWithContext(ctx, "PATCH", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "PATCH", url, bytes.NewBuffer(data))
 	if err != nil {
 		return todo.Task{}, err
 	}

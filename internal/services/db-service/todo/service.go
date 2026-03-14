@@ -62,7 +62,7 @@ func (s *TodoService) DeleteTask(ctx context.Context, id int) error {
 	return err
 }
 
-func (s *TodoService) CompleteTask(ctx context.Context, id int, completed bool) (todo.Task, error) {
+func (s *TodoService) CompleteTask(ctx context.Context, id int, completed *bool) (todo.Task, error) {
 	task, err := s.repo.Complete(ctx, id, completed)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

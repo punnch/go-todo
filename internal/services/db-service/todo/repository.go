@@ -12,5 +12,5 @@ type TodoRepository interface {
 	GetAll(ctx context.Context, id *int, completed *bool) ([]todo.Task, error)
 	Get(ctx context.Context, id int) (todo.Task, error)
 	Delete(ctx context.Context, id int) error
-	Complete(ctx context.Context, id int, completed bool) (todo.Task, error)
+	Complete(ctx context.Context, id int, completed *bool) (todo.Task, error)
 }
