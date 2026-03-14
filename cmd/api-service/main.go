@@ -12,7 +12,8 @@ func main() {
 	dbURL := os.Getenv("DB_SERVICE_URL")
 	if dbURL == "" {
 		fmt.Println("DB_SERVICE_URL environment variable isn't declared")
-		return
+
+		dbURL = "http://localhost:8010"
 	}
 
 	dbClient := client.NewTodoClient(dbURL)

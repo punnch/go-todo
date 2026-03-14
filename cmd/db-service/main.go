@@ -16,7 +16,11 @@ func main() {
 	dsn := os.Getenv("DB_URL")
 	if dsn == "" {
 		fmt.Println("DB_URL environment variable isn't declared")
-		return
+
+		dsn = os.Getenv("LOCAL_DB_URL")
+		if dsn == "" {
+			return
+		}
 	}
 
 	pool, err := postgres.NewPostrgresPool(ctx, dsn)
@@ -29,7 +33,13 @@ func main() {
 
 	service := todo.NewTodoService(repo)
 
-	server := server.NewServer(":8010", service)
+	port := os.Getenv("DB_SERVICE_PORT")
+	if port == "" {
+		fmt.Println("DB_SERVICE_PORT environment variable isn't declared")
+
+		port = ":8010"
+	}
+	server := server.NewServer(port, service)
 
 	if err := server.StartSever(); err != nil {
 		fmt.Println("server error:", err)

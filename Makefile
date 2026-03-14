@@ -8,6 +8,12 @@ deploy:
 undeploy:
 	docker compose down
 
+# local
+run-api-service:
+	go run cmd/api-service/main.go
+run-db-service:
+	go run cmd/db-service/main.go
+
 # migrate
 migrate-up:
 	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} up
