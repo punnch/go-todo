@@ -9,7 +9,7 @@
 
 ## Feature
 
-- [ ] add logger
+- [-] add logger
 - [ ] add unit-test
 
 ## Refactor

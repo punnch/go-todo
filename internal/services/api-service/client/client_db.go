@@ -56,7 +56,12 @@ func (c *TodoClient) CreateTask(ctx context.Context, title, description string) 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		return todo.Task{}, fmt.Errorf("failed to create task")
+		var clientErrorDTO dto.ClientErrorDTO
+		if err := json.NewDecoder(resp.Body).Decode(&clientErrorDTO); err != nil {
+			return todo.Task{}, err
+		}
+
+		return todo.Task{}, clientErrorDTO.ToError()
 	}
 
 	// Decode response from the server to task
