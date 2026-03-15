@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/punnch/go-todo/internal/core/apperrors"
 	"github.com/punnch/go-todo/internal/services/db-service/todo"
 )
 
@@ -49,13 +50,13 @@ func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		writeJSON(w, http.StatusBadRequest, NewErrorDTO(err))
 		return
 	}
 
 	task, err := s.service.CreateTask(r.Context(), req.Title, req.Description)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		writeJSON(w, http.StatusInternalServerError, NewErrorDTO(err))
 		return
 	}
 
@@ -72,7 +73,7 @@ func (s *Server) getAllTasks(w http.ResponseWriter, r *http.Request) {
 	if idStr != "" {
 		idInt, err := strconv.Atoi(idStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, err.Error())
+			writeJSON(w, http.StatusBadRequest, NewErrorDTO(err))
 			return
 		}
 
@@ -83,7 +84,7 @@ func (s *Server) getAllTasks(w http.ResponseWriter, r *http.Request) {
 	if completedStr != "" {
 		completedBool, err := strconv.ParseBool(completedStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, err.Error())
+			writeJSON(w, http.StatusBadRequest, NewErrorDTO(err))
 			return
 		}
 
@@ -92,7 +93,7 @@ func (s *Server) getAllTasks(w http.ResponseWriter, r *http.Request) {
 
 	tasks, err := s.service.GetAllTasks(r.Context(), id, completed)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		writeJSON(w, http.StatusInternalServerError, NewErrorDTO(err))
 		return
 	}
 
@@ -104,13 +105,13 @@ func (s *Server) getTask(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		writeJSON(w, http.StatusBadRequest, NewErrorDTO(err))
 		return
 	}
 
 	task, err := s.service.GetTask(r.Context(), id)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		errorCompareJSON(w, err, apperrors.ErrTaskNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -122,12 +123,12 @@ func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		writeJSON(w, http.StatusBadRequest, NewErrorDTO(err))
 		return
 	}
 
 	if err := s.service.DeleteTask(r.Context(), id); err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		errorCompareJSON(w, err, apperrors.ErrTaskNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -140,7 +141,7 @@ func (s *Server) completeTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		writeJSON(w, http.StatusBadRequest, NewErrorDTO(err))
 		return
 	}
 
@@ -148,13 +149,13 @@ func (s *Server) completeTask(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		writeJSON(w, http.StatusBadRequest, NewErrorDTO(err))
 		return
 	}
 
 	task, err := s.service.CompleteTask(r.Context(), id, req.Completed)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, err.Error())
+		errorCompareJSON(w, err, apperrors.ErrTaskNotFound, http.StatusNotFound)
 		return
 	}
 

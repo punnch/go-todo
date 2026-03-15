@@ -3,6 +3,7 @@ package dto
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -26,6 +27,14 @@ func (e *ErrorDTO) ToString() string {
 	}
 
 	return string(b)
+}
+
+type ClientErrorDTO struct {
+	Message string `json:"message"`
+}
+
+func (c ClientErrorDTO) ToError() error {
+	return fmt.Errorf("%s", c.Message)
 }
 
 func ErrorJSON(w http.ResponseWriter, err error, code int) {

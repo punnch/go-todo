@@ -49,7 +49,7 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := h.todoClient.CreateTask(r.Context(), taskDTO.Title, taskDTO.Description)
 	if err != nil {
-		dto.ErrorCompareJSON(w, err, apperrors.ErrNotFound, http.StatusNotFound)
+		dto.ErrorCompareJSON(w, err, apperrors.ErrTaskNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -141,7 +141,7 @@ func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := h.todoClient.GetTask(r.Context(), id)
 	if err != nil {
-		dto.ErrorCompareJSON(w, err, apperrors.ErrNotFound, http.StatusNotFound)
+		dto.ErrorCompareJSON(w, err, apperrors.ErrTaskNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -177,7 +177,7 @@ func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.todoClient.DeleteTask(r.Context(), id); err != nil {
-		dto.ErrorCompareJSON(w, err, apperrors.ErrNotFound, http.StatusNotFound)
+		dto.ErrorCompareJSON(w, err, apperrors.ErrTaskNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -214,7 +214,7 @@ func (h *Handler) CompleteTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := h.todoClient.CompleteTask(r.Context(), id, completeTaskDTO.Completed)
 	if err != nil {
-		dto.ErrorCompareJSON(w, err, apperrors.ErrNotFound, http.StatusNotFound)
+		dto.ErrorCompareJSON(w, err, apperrors.ErrTaskNotFound, http.StatusNotFound)
 		return
 	}
 

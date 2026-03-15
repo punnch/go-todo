@@ -44,7 +44,7 @@ func (s *TodoService) GetTask(ctx context.Context, id int) (todo.Task, error) {
 	task, err := s.repo.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return todo.Task{}, apperrors.ErrNotFound
+			return todo.Task{}, apperrors.ErrTaskNotFound
 		}
 		return todo.Task{}, err
 	}
@@ -56,7 +56,7 @@ func (s *TodoService) DeleteTask(ctx context.Context, id int) error {
 	err := s.repo.Delete(ctx, id)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return apperrors.ErrNotFound
+		return apperrors.ErrTaskNotFound
 	}
 
 	return err
@@ -66,9 +66,9 @@ func (s *TodoService) CompleteTask(ctx context.Context, id int, completed *bool)
 	task, err := s.repo.Complete(ctx, id, completed)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return todo.Task{}, apperrors.ErrNotFound
+			return todo.Task{}, apperrors.ErrTaskNotFound
 		}
-		return todo.Task{}, apperrors.ErrNotFound
+		return todo.Task{}, apperrors.ErrTaskNotFound
 	}
 
 	return task, nil

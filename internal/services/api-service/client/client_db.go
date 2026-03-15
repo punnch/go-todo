@@ -9,7 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/punnch/go-todo/internal/core/apperrors"
 	"github.com/punnch/go-todo/internal/core/domains/todo"
+	"github.com/punnch/go-todo/internal/services/api-service/api/dto"
 )
 
 type TodoClient struct {
@@ -117,8 +119,19 @@ func (c *TodoClient) GetTask(ctx context.Context, id int) (todo.Task, error) {
 	}
 	defer resp.Body.Close()
 
+	// how to get error from server??? (problem)
+
 	if resp.StatusCode != http.StatusOK {
-		return todo.Task{}, fmt.Errorf("failed to get task")
+		if resp.StatusCode == http.StatusNotFound {
+			return todo.Task{}, apperrors.ErrTaskNotFound
+		}
+
+		var clientErrorDTO dto.ClientErrorDTO
+		if err := json.NewDecoder(resp.Body).Decode(&clientErrorDTO); err != nil {
+			return todo.Task{}, err
+		}
+
+		return todo.Task{}, clientErrorDTO.ToError()
 	}
 
 	var task todo.Task
@@ -144,7 +157,16 @@ func (c *TodoClient) DeleteTask(ctx context.Context, id int) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("failed to delete task")
+		if resp.StatusCode == http.StatusNotFound {
+			return apperrors.ErrTaskNotFound
+		}
+
+		var clientErrorDTO dto.ClientErrorDTO
+		if err := json.NewDecoder(resp.Body).Decode(&clientErrorDTO); err != nil {
+			return err
+		}
+
+		return clientErrorDTO.ToError()
 	}
 
 	return nil
@@ -174,7 +196,16 @@ func (c *TodoClient) CompleteTask(ctx context.Context, id int, completed *bool) 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return todo.Task{}, fmt.Errorf("failed to complete task")
+		if resp.StatusCode == http.StatusNotFound {
+			return todo.Task{}, apperrors.ErrTaskNotFound
+		}
+
+		var clientErrorDTO dto.ClientErrorDTO
+		if err := json.NewDecoder(resp.Body).Decode(&clientErrorDTO); err != nil {
+			return todo.Task{}, err
+		}
+
+		return todo.Task{}, clientErrorDTO.ToError()
 	}
 
 	// Decode response from the server to task
