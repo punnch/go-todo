@@ -13,3 +13,6 @@ go.work.sum
 
 # DB and Docker files
 /out
+
+# Personal files
+todo.md
