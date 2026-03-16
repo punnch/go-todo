@@ -7,9 +7,13 @@
 
 - [x] make correct error messages and status codes
 
+- [x] local usage of logger
+
 ## Feature
 
-- [-] add logger
+- [x] add logger
+- [x] log every error
+
 - [ ] add unit-test
 
 ## Refactor

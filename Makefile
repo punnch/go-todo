@@ -1,8 +1,13 @@
 include .env
 export
 
+# setup
+setup:
+	@mkdir -p out/logs/api-service out/logs/db-service
+	@chmod -R 755 out/logs
+
 # docker
-deploy:
+deploy: setup
 	docker compose up -d
 
 undeploy:

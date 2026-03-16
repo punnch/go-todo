@@ -124,8 +124,6 @@ func (c *TodoClient) GetTask(ctx context.Context, id int) (todo.Task, error) {
 	}
 	defer resp.Body.Close()
 
-	// how to get error from server??? (problem)
-
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound {
 			return todo.Task{}, apperrors.ErrTaskNotFound
@@ -180,7 +178,7 @@ func (c *TodoClient) DeleteTask(ctx context.Context, id int) error {
 func (c *TodoClient) CompleteTask(ctx context.Context, id int, completed *bool) (todo.Task, error) {
 	url := c.baseURL + fmt.Sprintf("/tasks/%d", id)
 
-	payload := map[string]*bool{"Completed": completed}
+	payload := map[string]*bool{"completed": completed}
 
 	data, err := json.Marshal(payload)
 	if err != nil {

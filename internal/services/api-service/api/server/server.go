@@ -21,7 +21,7 @@ func NewServer(addr string, handler *Handler) *Server {
 	}
 }
 
-func (s *Server) Start() error {
+func (s *Server) StartServer() error {
 	s.router.HandleFunc("/tasks", s.handlers.CreateTask).Methods("POST")
 	s.router.HandleFunc("/tasks", s.handlers.GetAllTasks).Methods("GET")
 	s.router.HandleFunc("/tasks/{id}", s.handlers.GetTask).Methods("GET")
