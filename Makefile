@@ -4,7 +4,7 @@ export
 # setup
 setup:
 	@mkdir -p out/logs/api-service out/logs/db-service
-	@chmod -R 755 out/logs
+	@sudo chmod -R 755 out
 
 # docker
 deploy: setup

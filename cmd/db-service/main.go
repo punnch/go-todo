@@ -14,8 +14,14 @@ import (
 func main() {
 	ctx := context.Background()
 
+	// Get log level
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		panic("LOG_LEVEL not set")
+	}
+
 	// Create logger
-	log, logFileClose, err := logger.NewLogger("info", "out/logs/db-service") // debug, info, warn, error
+	log, logFileClose, err := logger.NewLogger(logLevel, "out/logs/db-service") // debug, info, warn, error
 	if err != nil {
 		panic("failed to create logger: " + err.Error())
 	}
@@ -37,6 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to create database pool", zap.Error(err))
 	}
+	defer pool.Close()
 
 	// Get server port
 	port := os.Getenv("DB_SERVICE_PORT")

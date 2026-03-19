@@ -11,8 +11,14 @@ import (
 )
 
 func main() {
+	// Get log level
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		panic("LOG_LEVEL not set")
+	}
+
 	// Logger
-	log, logFileClose, err := logger.NewLogger("info", "out/logs/api-service") // debug, info, warn, error
+	log, logFileClose, err := logger.NewLogger(logLevel, "out/logs/api-service") // debug, info, warn, error
 	if err != nil {
 		panic("failed to create logger: " + err.Error())
 	}
