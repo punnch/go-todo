@@ -1,161 +1,255 @@
 # go-todo
 
-A todo REST API written in Go. Split into two services that talk to each other over HTTP — one handles the public API, the other owns the database.
+A microservices-based Todo REST API written in Go.
 
 ## Architecture
 
-```-
-client → api-service :8080 → db-service :8010 → postgres :5432
+The system is split into two independent services:
+
+- **api-service** — HTTP REST API. Handles all incoming requests, validates input, and delegates to `db-service` via an internal TCP client.
+- **db-service** — Internal data service. Owns the PostgreSQL connection and all database logic. Not exposed publicly.
+
+Both services run in Docker containers alongside a managed PostgreSQL instance. Migrations are handled by `golang-migrate`.
+
+```
+Client → api-service (HTTP :8030) → db-service (TCP :8010) → PostgreSQL
 ```
 
-**api-service** is the only thing exposed to the outside. It validates requests and forwards them to db-service. **db-service** is internal — it manages the postgres connection and runs all queries. They're separated so the database layer is never directly reachable from outside.
+## Tech Stack
 
-## Stack
+| Layer | Technology |
+|---|---|
+| Language | Go 1.25 |
+| HTTP Router | gorilla/mux |
+| Database Driver | pgx/v5 |
+| Migrations | golang-migrate |
+| Database | PostgreSQL 18 |
+| Runtime | Docker Compose |
+| Logging | zap |
 
-- Go 1.25
-- PostgreSQL 18
-- [gorilla/mux](https://github.com/gorilla/mux) — routing
-- [jackc/pgx](https://github.com/jackc/pgx) — postgres driver
-- [migrate](https://github.com/golang-migrate/migrate) — database migrations
-- Docker + Docker Compose
+## Project Structure
 
-## Project structure
-
-```-
-.
+```
+go-todo/
 ├── cmd/
-│   ├── api-service/
-│   │   ├── main.go
-│   │   └── Dockerfile
-│   └── db-service/
-│       ├── main.go
-│       └── Dockerfile
+│   ├── api-service/        # API service entrypoint + Dockerfile
+│   └── db-service/         # DB service entrypoint + Dockerfile
 ├── internal/
 │   ├── core/
-│   │   ├── apperrors/        # shared error types
-│   │   └── domains/todo/     # Task domain model
+│   │   ├── domains/todo/   # Task domain model
+│   │   ├── apperrors/      # Shared application errors
+│   │   └── logger/         # Zap logger setup
 │   └── services/
-│       ├── api-service/
-│       │   ├── api/          # handlers, DTOs, validation
-│       │   └── client/       # HTTP client for db-service
-│       └── db-service/
-│           ├── migrations/   # SQL migration files
-│           ├── postgres/     # connection pool + repository
-│           ├── server/       # HTTP handlers
-│           └── todo/         # service + repository interface
+│       ├── api-service/    # HTTP handlers, router, DB client
+│       └── db-service/     # Repository, service layer, TCP server, postgres pool
+├── migrations/             # SQL migration files
 ├── docker-compose.yaml
-└── .env.example
+├── Makefile
+└── .env
 ```
 
-## Getting started
+## Setup
 
-Copy the example env and fill in your values:
+### 1. Configure environment
 
 ```bash
 cp .env.example .env
 ```
 
+Fill in the required values:
+
 ```env
-# Connection string used by db-service and the migrate container
-DB_URL=postgres://db_user:db_password@postgres:5432/db_name?sslmode=disable
+LOG_LEVEL=info
 
-# Postgres credentials
-DB_PASS=db_password
-DB_USER=db_user
-DB_NAME=db_name
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=your_db
 
-# Where api-service reaches db-service (don't use 8080, that's api-service)
-DB_SERVICE_URL=http://db-service:8010
-
-# Used for running migrations locally (outside Docker)
-LOCAL_DB_URL=postgres://postgres:yourpassword@localhost:5432/go_todo?sslmode=disable
-
-# Used for step migrations (see below)
-step=1
+API_SERVICE_PORT=8030
+DB_SERVICE_PORT=8010
 ```
 
-Then start everything:
+### 2. Start the database
 
 ```bash
-make deploy
+make env-up
 ```
 
-This builds both services, starts postgres, runs migrations, and brings up the API. To tear it down:
+### 3. Run migrations
 
 ```bash
-make undeploy
+make migrate-up
 ```
 
-## API
+### 4. Start the services
 
-All requests go to `api-service` on port `8080`. Errors come back as JSON with a `message` and `time` field.
+```bash
+make services-up
+```
 
-### Create a task
+The API is now available at `http://localhost:8030`.
 
-```-
-POST /tasks
-Content-Type: application/json
+## API Reference
 
+### Task model
+
+```json
 {
-  "title": "buy milk",
-  "description": "2% please"
+  "id": 1,
+  "title": "Buy groceries",
+  "description": "Milk, eggs, bread",
+  "completed": false,
+  "created_at": "2025-01-01T00:00:00Z"
 }
 ```
 
-Both fields are required. Title must be unique (max 50 chars), description max 200 chars.
+### Endpoints
 
-### Get all tasks
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/tasks` | Create a task |
+| `GET` | `/tasks` | Get all tasks (filterable) |
+| `GET` | `/tasks/{id}` | Get a task by ID |
+| `PATCH` | `/tasks/{id}` | Mark a task complete/incomplete |
+| `DELETE` | `/tasks/{id}` | Delete a task |
 
-```-
+---
+
+#### `POST /tasks`
+
+Create a new task.
+
+**Request body:**
+```json
+{
+  "title": "Buy groceries",
+  "description": "Milk, eggs, bread"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": 1,
+  "title": "Buy groceries",
+  "description": "Milk, eggs, bread",
+  "completed": false,
+  "created_at": "2025-01-01T12:00:00Z"
+}
+```
+
+---
+
+#### `GET /tasks`
+
+Get all tasks. Supports optional query parameters:
+
+| Param | Type | Description |
+|---|---|---|
+| `id` | int | Filter by task ID |
+| `completed` | bool | Filter by completion status |
+
+**Examples:**
+```
 GET /tasks
-GET /tasks?completed=true
-GET /tasks?id=1
+GET /tasks?completed=false
+GET /tasks?id=3
 ```
 
-### Get a task
+**Response:** `200 OK` — array of task objects
 
-```-
-GET /tasks/:id
-```
+---
 
-### Complete (or uncomplete) a task
+#### `GET /tasks/{id}`
 
-```-
-PATCH /tasks/:id
-Content-Type: application/json
+Get a single task by ID.
 
+**Response:** `200 OK` — task object, or `404 Not Found`
+
+---
+
+#### `PATCH /tasks/{id}`
+
+Update the completion status of a task.
+
+**Request body:**
+```json
 {
   "completed": true
 }
 ```
 
-### Delete a task
+**Response:** `200 OK` — updated task object
 
-```-
-DELETE /tasks/:id
+---
+
+#### `DELETE /tasks/{id}`
+
+Delete a task by ID.
+
+**Response:** `204 No Content`, or `404 Not Found`
+
+---
+
+### Error responses
+
+All errors return a JSON body with a timestamp:
+
+```json
+{
+  "error": "task not found",
+  "time": "2025-01-01T12:00:00Z"
+}
 ```
 
-## Migrations
+## Makefile Reference
 
-Migrations live in `internal/services/db-service/migrations/` and run automatically on `make deploy` via the `migrate` container.
+### Environment
 
-To run them manually against a local database:
+| Command | Description |
+|---|---|
+| `make env-up` | Start the PostgreSQL container |
+| `make env-down` | Stop the PostgreSQL container |
+| `make env-cleanup` | Destroy PostgreSQL container and data volume |
+| `make env-port-forward` | Expose PostgreSQL on `127.0.0.1:5432` (for local tools) |
+| `make env-port-close` | Stop the port forwarder |
+
+### Services
+
+| Command | Description |
+|---|---|
+| `make services-up` | Start api-service and db-service |
+| `make services-down` | Stop api-service and db-service |
+| `make services-rebuild` | Rebuild service images without cache |
+
+### Migrations
+
+| Command | Description |
+|---|---|
+| `make migrate-up` | Apply all pending migrations |
+| `make migrate-down` | Roll back the last migration |
+| `make migrate-create seq=<name>` | Create a new migration file pair |
+
+### Other
+
+| Command | Description |
+|---|---|
+| `make ps` | Show status of all Compose containers |
+
+## Development
+
+To connect a local SQL client or migration tool directly to PostgreSQL:
 
 ```bash
-make migrate-up                # apply all pending migrations
-make migrate-down              # roll back all migrations
-
-make migrate-up-step step=1    # apply N migrations
-make migrate-down-step step=1  # roll back N migrations
+make env-port-forward
 ```
 
-## Running locally without Docker
+This forwards `127.0.0.1:5432` to the Postgres container via socat.
 
-Make sure postgres is running locally and `LOCAL_DB_URL` in your `.env` points to it, then:
+To create a new migration:
 
 ```bash
-go run ./cmd/db-service/main.go
-go run ./cmd/api-service/main.go
+make migrate-create seq=add_priority_column
 ```
 
-db-service needs to be up before api-service, same as in Docker.
+This generates `migrations/000002_add_priority_column.up.sql` and `.down.sql`.
