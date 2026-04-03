@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/punnch/go-todo/internal/core/domains/todo"
@@ -18,7 +19,13 @@ func NewPostgresRepo(pool *pgxpool.Pool) *PostgresRepo {
 }
 
 // Create pool to work without concurrency problems
-func NewPostrgresPool(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
+func NewPostrgresPool(ctx context.Context, db_user, db_password, db_name string) (*pgxpool.Pool, error) {
+	dsn := fmt.Sprintf("postgres://%s:%s@postgres:5432/%s?sslmode=disable", 
+	db_user, 
+	db_password, 
+	db_name,
+)
+
 	return pgxpool.New(ctx, dsn)
 }
 

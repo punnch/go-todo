@@ -19,9 +19,9 @@ type TodoClient struct {
 	client  *http.Client
 }
 
-func NewTodoClient(url string) *TodoClient {
+func NewTodoClient(port string) *TodoClient {
 	return &TodoClient{
-		baseURL: url,
+		baseURL: fmt.Sprintf("http://db-service:%s", port),
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},

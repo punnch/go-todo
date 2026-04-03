@@ -1,55 +1,64 @@
 services:
   api-service:
     build:
-      context: .
+      context: ${PROJECT_ROOT}
       dockerfile: cmd/api-service/Dockerfile
     container_name: api-service
+    restart: always
     depends_on:
       - db-service
     environment:
-      DB_SERVICE_URL: ${DB_SERVICE_URL}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - DB_SERVICE_PORT=${DB_SERVICE_PORT}
+      - API_SERVICE_PORT=${API_SERVICE_PORT}
     volumes:
-      - ./out/logs:/app/out/logs
+      - ${PROJECT_ROOT}/out/logs:/app/out/logs
     ports:
-      - 8080:8080
+      - ${API_SERVICE_PORT}:${API_SERVICE_PORT}
 
   db-service:
     build:
-      context: .
+      context: ${PROJECT_ROOT}
       dockerfile: cmd/db-service/Dockerfile
     container_name: db-service
-    depends_on:
-      postgres:
-        condition: service_healthy
+    restart: always
     environment:
-      DB_URL: ${DB_URL}
-      DB_SERVICE_PORT: ${DB_SERVICE_PORT}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_SERVICE_PORT=${DB_SERVICE_PORT}
     volumes:
-      - ./out/logs:/app/out/logs
+      - ${PROJECT_ROOT}/out/logs:/app/out/logs
     ports:
-      - 8010:8010
+      - ${DB_SERVICE_PORT}:${DB_SERVICE_PORT}
 
   postgres:
     image: postgres:18-bookworm
     container_name: postgres
+    restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $${DB_USER} -d $${DB_URL}" ]
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
     environment:
-      POSTGRES_PASSWORD: ${DB_PASS}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - ./out/pg_data:/var/lib/postgresql
-    ports:
-      - 5432:5432
+      - ${PROJECT_ROOT}/out/pgdata:/var/lib/postgresql
 
-  migrate:
-    image: migrate/migrate
-    container_name: migrate
-    depends_on:
-      - postgres
+  port-forwarder:
+    image: alpine/socat:1.8.0.3
+    container_name: postgres-port-forwarder
+    command: "tcp-listen:5432,fork,reuseaddr tcp-connect:postgres:5432"
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  postgres-migrate:
+    image: migrate/migrate:v4.19.1
+    container_name: postgres-migrate
     volumes:
-      - ./internal/services/db-service/migrations:/migrations
-    command: -path /migrations -database ${DB_URL} up
+      - ${PROJECT_ROOT}/migrations:/migrations
