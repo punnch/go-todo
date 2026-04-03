@@ -36,12 +36,6 @@ services-down:
 services-rebuild:
 	@docker compose build --no-cache db-service api-service
 
-# local
-api-service-run:
-	@go run cmd/api-service/main.go
-db-service-run:
-	@go run cmd/db-service/main.go
-
 # migrate
 migrate-create:
 	@if [ -z "$(seq)" ]; then \
