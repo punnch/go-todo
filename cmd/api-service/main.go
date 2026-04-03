@@ -24,17 +24,21 @@ func main() {
 	}
 	defer logFileClose()
 
-	// Service connection
-	dbURL := os.Getenv("DB_SERVICE_URL")
-	if dbURL == "" {
-		url := "http://localhost:8010"
-		log.Warn("DB_SERVICE_URL not set", zap.String("url", url))
-		dbURL = url
+	// Api service 
+	apiServicePort := os.Getenv("API_SERVICE_PORT")
+	if apiServicePort == "" {
+		log.Fatal("API_SERVICE_PORT not set")
 	}
 
-	dbClient := client.NewTodoClient(dbURL)
+	// Service connection
+	dbServicePort := os.Getenv("DB_SERVICE_PORT")
+	if dbServicePort == "" {
+		log.Fatal("DB_SERVICE_PORT not set")
+	}
+
+	dbClient := client.NewTodoClient(dbServicePort)
 	handler := server.NewHandler(dbClient, log)
-	srv := server.NewServer(":8080", handler)
+	srv := server.NewServer(apiServicePort, handler)
 
 	if err := srv.StartServer(); err != nil {
 		log.Fatal("server error", zap.Error(err))

@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -22,7 +23,7 @@ type Server struct {
 func NewServer(addr string, service *todo.TodoService, log *zap.Logger) *Server {
 	return &Server{
 		router:  mux.NewRouter(),
-		addr:    addr,
+		addr:    fmt.Sprintf(":%s", addr),
 		service: service,
 		log:     log,
 	}

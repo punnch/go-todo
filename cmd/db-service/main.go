@@ -27,20 +27,24 @@ func main() {
 	}
 	defer logFileClose()
 
-	// Get db url
-	dsn := os.Getenv("DB_URL")
-	if dsn == "" {
-		log.Warn("DB_URL not set, trying LOCAL_DB_URL...")
+	// Get db credentials
+	postgresUser := os.Getenv("POSTGRES_USER")
+	if postgresUser == "" {
+			log.Fatal("POSTGRES_USER not set")
+	}
 
-		dsn = os.Getenv("LOCAL_DB_URL")
-		if dsn == "" {
-			log.Fatal("LOCAL_DB_URL is also not set")
-		}
+	postgresPassword := os.Getenv("POSTGRES_PASSWORD")
+	if postgresPassword == "" {
+			log.Fatal("POSTGRES_PASSWORD not set")
+	}
+
+	postgresDB := os.Getenv("POSTGRES_DB")
+	if postgresDB == "" {
+			log.Fatal("POSTGRES_DB not set")
 	}
 
 	// Create db pool
-	pool, err := postgres.NewPostrgresPool(ctx, dsn)
-	if err != nil {
+	pool, err := postgres.NewPostrgresPool(ctx, postgresUser, postgresPassword, postgresDB); if err != nil {
 		log.Fatal("failed to create database pool", zap.Error(err))
 	}
 	defer pool.Close()
@@ -48,8 +52,7 @@ func main() {
 	// Get server port
 	port := os.Getenv("DB_SERVICE_PORT")
 	if port == "" {
-		port = ":8010"
-		log.Warn("DB_SERVICE_PORT not set", zap.String("port", port))
+		log.Fatal("DB_SERVICE_PORT not set")
 	}
 
 	repo := postgres.NewPostgresRepo(pool)

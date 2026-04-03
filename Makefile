@@ -1,33 +1,75 @@
 include .env
 export
 
-# setup
-setup:
-	@mkdir -p out/logs/api-service out/logs/db-service
-	@sudo chmod -R 755 out
+export PROJECT_ROOT=$(shell pwd)
 
-# docker
-deploy: setup
-	docker compose up -d
+# env
+env-up:
+	@docker compose up -d postgres
 
-undeploy:
-	docker compose down
+env-down:
+	@docker compose down postgres
+
+env-cleanup:
+	@read -p "Do you want to clean up your environment files? You may lose your data. [y/N]: " ans; \
+	if [ "$$ans" == "y" ]; then \
+		docker compose down postgres && \
+		sudo rm -rf out/pgdata && \
+		echo "Environment files cleaned up successfuly"; \
+	else \
+		echo "Cleaning of environment files canceled"; \
+	fi
+
+env-port-forward:
+	@docker compose up -d port-forwarder
+
+env-port-close:
+	@docker compose down port-forwarder
+
+# services
+services-up: 
+	@docker compose up -d db-service api-service
+
+services-down:
+	@docker compose down db-service api-service
+
+services-rebuild:
+	@docker compose build --no-cache db-service api-service
 
 # local
-run-api-service:
-	go run cmd/api-service/main.go
-run-db-service:
-	go run cmd/db-service/main.go
+api-service-run:
+	@go run cmd/api-service/main.go
+db-service-run:
+	@go run cmd/db-service/main.go
 
 # migrate
+migrate-create:
+	@if [ -z "$(seq)" ]; then \
+		echo "seq not set. Example: make migrate-create seq=init"; \
+		exit 1; \
+	fi; 
+	docker compose run --rm postgres-migrate \
+		create \
+		-ext sql \
+		-dir /migrations \
+		-seq "$(seq)"
+
 migrate-up:
-	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} up
+	@make migrate-action action=up
 
 migrate-down:
-	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} down
+	@make migrate-action action=down
 
-migrate-up-step:
-	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} up ${step}
+migrate-action:
+	@if [ -z "$(action)" ]; then \
+		echo "action not set. Example: make migrate-action action=up"; \
+		exit 1; \
+	fi; \
+	docker compose run --rm postgres-migrate \
+		-path /migrations \
+		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable \
+		"$(action)"
 
-migrate-down-step:
-	migrate -path internal/services/db-service/migrations -database ${LOCAL_DB_URL} down ${step}
+# other
+ps:
+	@docker compose ps

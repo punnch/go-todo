@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -16,7 +17,7 @@ type Server struct {
 func NewServer(addr string, handler *Handler) *Server {
 	return &Server{
 		router:   mux.NewRouter(),
-		addr:     addr,
+		addr:     fmt.Sprintf(":%s", addr),
 		handlers: handler,
 	}
 }

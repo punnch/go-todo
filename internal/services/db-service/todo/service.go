@@ -68,7 +68,7 @@ func (s *TodoService) CompleteTask(ctx context.Context, id int, completed *bool)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return todo.Task{}, apperrors.ErrTaskNotFound
 		}
-		return todo.Task{}, apperrors.ErrTaskNotFound
+		return todo.Task{}, err
 	}
 
 	return task, nil
