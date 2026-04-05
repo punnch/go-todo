@@ -1,25 +1,25 @@
 services:
   api-service:
     build:
-      context: ${PROJECT_ROOT}
-      dockerfile: cmd/api-service/Dockerfile
+      context: ${PROJECT_ROOT}/api-service
+      dockerfile: Dockerfile
     container_name: api-service
     restart: always
     depends_on:
       - db-service
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
-      - DB_SERVICE_PORT=${DB_SERVICE_PORT}
-      - API_SERVICE_PORT=${API_SERVICE_PORT}
+      - DB_SERVICE_ADDR=:8010
+      - API_SERVICE_ADDR=:8080
     volumes:
-      - ${PROJECT_ROOT}/out/logs:/app/out/logs
+      - ${PROJECT_ROOT}/out/logs/api-service:/app/out/logs
     ports:
-      - ${API_SERVICE_PORT}:${API_SERVICE_PORT}
+      - "8080:8080"
 
   db-service:
     build:
-      context: ${PROJECT_ROOT}
-      dockerfile: cmd/db-service/Dockerfile
+      context: ${PROJECT_ROOT}/db-service
+      dockerfile: Dockerfile
     container_name: db-service
     restart: always
     environment:
@@ -27,11 +27,11 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-      - DB_SERVICE_PORT=${DB_SERVICE_PORT}
+      - DB_SERVICE_ADDR=:8010
     volumes:
-      - ${PROJECT_ROOT}/out/logs:/app/out/logs
+      - ${PROJECT_ROOT}/out/logs/db-service:/app/out/logs
     ports:
-      - ${DB_SERVICE_PORT}:${DB_SERVICE_PORT}
+      - "8010:8010"
 
   postgres:
     image: postgres:18-bookworm
